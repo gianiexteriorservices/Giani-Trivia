@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Last Call Trivia">
+<meta name="theme-color" content="#0e0f14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="styles.css">
+<title>Last Call Trivia</title>
+</head>
+<body>
+<div id="app"><div id="screen"></div></div>
+<div id="toast"></div>
+<div class="scrim" id="scrim" data-action="closeSheet"></div>
+<div class="sheet" id="sheet"></div>
+<script src="questions.js"></script>
+<script src="stats.js"></script>
+<script src="game.js"></script>
+<script src="ui.js"></script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+</script>
+</body>
+</html>

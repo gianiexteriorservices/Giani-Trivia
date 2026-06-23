@@ -1,0 +1,10 @@
+{
+  "name": "last-call-trivia",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hard multiple-choice trivia PWA for two players, with online/offline questions and synced stats via Netlify Blobs.",
+  "dependencies": {
+    "@netlify/blobs": "^8.0.0"
+  }
+}

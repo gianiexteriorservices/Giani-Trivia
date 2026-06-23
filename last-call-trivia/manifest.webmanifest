@@ -1,0 +1,14 @@
+{
+  "name": "Last Call Trivia",
+  "short_name": "Last Call",
+  "description": "Hard multiple-choice trivia for two — pass & steal, online or offline, with synced stats.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e0f14",
+  "theme_color": "#0e0f14",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
