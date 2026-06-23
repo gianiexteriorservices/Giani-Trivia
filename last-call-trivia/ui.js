@@ -32,7 +32,7 @@ Game.onChange=render; Stats.onChange=function(){ if(view==='stats'||(!Game.state
 
 /* ---------- HOME ---------- */
 function renderHome(){
-  if(!setup){ setup={ names:(Game.prefs.names||['Alex','Anthony']).slice(), included:(Game.prefs.included||Object.keys(CATS)).slice(), mode:Game.prefs.mode||'auto', target:(Game.prefs.target||0), customOpen:false }; }
+  if(!setup){ setup={ names:(Game.prefs.names||['Alex','Anthony']).slice(), included:(Game.prefs.included||Object.keys(CATS)).slice(), mode:Game.prefs.mode||'auto', qTarget:(Game.prefs.qTarget!=null?Game.prefs.qTarget:20) }; }
   var G=Game.state;
   var canResume = !!(G && G.phase && G.phase!=='over');
   var on=Game.isOnline();
@@ -58,21 +58,20 @@ function renderHome(){
           '<button class="'+(setup.mode==='online'?'on':'')+'" data-action="setMode" data-mode="online">Online</button>'+
           '<button class="'+(setup.mode==='offline'?'on':'')+'" data-action="setMode" data-mode="offline">Offline</button>'+
         '</div><div class="hint" style="margin-top:6px">Online pulls fresh questions from public trivia databases; Offline uses the '+(window.LCT_BANK?window.LCT_BANK.length:0)+' built-in ones. Auto picks based on your signal.</div></div>'+
-      '<div style="margin-top:14px"><label class="fld">Match mode</label>'+
+      '<div style="margin-top:14px"><label class="fld">Match length</label>'+
         '<div class="seg">'+
-          '<button class="'+(!setup.customOpen&&!setup.target?'on':'')+'" data-action="setTarget" data-t="0">Open</button>'+
-          '<button class="'+(!setup.customOpen&&setup.target===200?'on':'')+'" data-action="setTarget" data-t="200">200</button>'+
-          '<button class="'+(!setup.customOpen&&setup.target===300?'on':'')+'" data-action="setTarget" data-t="300">300</button>'+
-          '<button class="'+(!setup.customOpen&&setup.target===500?'on':'')+'" data-action="setTarget" data-t="500">500</button>'+
-          '<button class="'+(setup.customOpen?'on':'')+'" data-action="customTarget">Custom</button>'+
+          '<button class="'+(!setup.qTarget?'on':'')+'" data-action="setQTarget" data-q="0">Open</button>'+
+          '<button class="'+(setup.qTarget===20?'on':'')+'" data-action="setQTarget" data-q="20">20</button>'+
+          '<button class="'+(setup.qTarget===50?'on':'')+'" data-action="setQTarget" data-q="50">50</button>'+
+          '<button class="'+(setup.qTarget===100?'on':'')+'" data-action="setQTarget" data-q="100">100</button>'+
         '</div>'+
-        (setup.customOpen?'<input class="txt" id="targetCustom" type="number" inputmode="numeric" min="50" step="25" style="margin-top:8px" placeholder="Target points, e.g. 350" value="'+(setup.target||'')+'">':'')+
-        '<div class="hint" style="margin-top:6px">'+(setup.target?'First to '+setup.target+' points wins the match.':'Open play — end the match from the menu whenever you like.')+'</div></div>'+
+        '<div class="hint" style="margin-top:6px">'+(setup.qTarget?(setup.qTarget+' questions each, then the higher score wins.'):'Open play — end the match from the menu whenever you like.')+'</div></div>'+
     '</div>'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin:20px 2px 10px">'+
-      '<label class="fld" style="margin:0">Categories</label>'+
+      '<label class="fld" style="margin:0">Categories this session</label>'+
       '<span class="selcount">'+setup.included.length+' on • <a class="link" data-action="allCats">all</a> • <a class="link" data-action="noCats">none</a></span></div>'+
     '<div class="chips">'+chips+'</div>'+
+    '<div class="hint" style="text-align:left;margin-top:8px">Each question is drawn at random from these — no need to choose a category every turn.</div>'+
     '<button class="btn primary" style="margin-top:18px;font-size:19px;padding:18px" data-action="startGame">Start Game</button>'+
     '<div class="row" style="margin-top:10px">'+
       '<button class="btn ghost" data-action="viewStats">\u{1F4CA} Stats</button>'+
@@ -88,23 +87,23 @@ function header(){
       '<span class="modepill '+(on?'on':'off')+'" data-action="cycleMode"><span class="led"></span>'+esc(Game.modeLabel())+'</span></div>'+
       '<button class="iconbtn" data-action="openMenu">☰</button></div>'+
     '<div class="scorebar">'+
-      '<div class="pscore p1 '+(G.turn===0?'active':'')+'"><span class="turntag">Up now</span><div class="nm"><span class="dot"></span>'+esc(a.name)+'</div><div class="val">'+a.score+'</div>'+(G.target?'<div class="prog"><div class="fill p1" style="width:'+Math.min(100,Math.round(100*a.score/G.target))+'%"></div></div>':'')+'</div></div>'+
-      '<div class="pscore p2 '+(G.turn===1?'active':'')+'"><span class="turntag">Up now</span><div class="nm"><span class="dot"></span>'+esc(b.name)+'</div><div class="val">'+b.score+'</div>'+(G.target?'<div class="prog"><div class="fill p2" style="width:'+Math.min(100,Math.round(100*b.score/G.target))+'%"></div></div>':'')+'</div></div>'+(G.target?'<div class="goal">🏁 First to '+G.target+'</div>':'')+'';
+      '<div class="pscore p1 '+(G.turn===0?'active':'')+'"><span class="turntag">Up now</span><div class="nm"><span class="dot"></span>'+esc(a.name)+'</div><div class="val">'+a.score+'</div>'+(G.qTarget?'<div class="prog"><div class="fill p1" style="width:'+Math.min(100,Math.round(100*G.turnsTaken[0]/G.qTarget))+'%"></div></div>':'')+'</div></div>'+
+      '<div class="pscore p2 '+(G.turn===1?'active':'')+'"><span class="turntag">Up now</span><div class="nm"><span class="dot"></span>'+esc(b.name)+'</div><div class="val">'+b.score+'</div>'+(G.qTarget?'<div class="prog"><div class="fill p2" style="width:'+Math.min(100,Math.round(100*G.turnsTaken[1]/G.qTarget))+'%"></div></div>':'')+'</div></div>'+(G.qTarget?'<div class="goal">🏁 '+G.qTarget+' questions each</div>':'')+'';
 }
 
 /* ---------- TURN ---------- */
 function renderTurn(){
   var G=Game.state;
   if(Game.loading){ $('screen').innerHTML=header()+'<div class="qcard" style="text-align:center"><div class="qtext">Pulling a question…</div></div>'; return; }
-  var chips=G.included.map(function(k){
-    var n=Game.remaining(k);
-    return '<button class="chip" '+(n===0?'style="opacity:.45"':'')+' data-action="pick" data-cat="'+k+'"><span class="em">'+CATS[k].em+'</span>'+
-      '<span><div>'+CATS[k].label+'</div><div class="meta">'+(Game.isOnline()?'online + '+n+' offline':n+' left')+'</div></span></button>';
-  }).join('');
+  var catNames=G.included.map(function(k){ return CATS[k].label; }).join(', ');
+  var qinfo=G.qTarget?('Question '+Math.min(G.turnsTaken[G.turn]+1,G.qTarget)+' of '+G.qTarget):'';
   $('screen').innerHTML=header()+
-    '<div class="turnline" style="font-size:16px;margin-bottom:14px"><span class="dot" style="background:'+pColor(G.turn)+'"></span><b>'+esc(G.players[G.turn].name)+'</b>, pick a category</div>'+
-    '<button class="chip rand" style="width:100%;justify-content:center;margin-bottom:12px;font-size:17px;padding:16px" data-action="pickRandom">\u{1F3B2} Surprise me</button>'+
-    '<div class="chips">'+chips+'</div><div style="height:18px"></div>';
+    '<div class="qcard" style="text-align:center;min-height:150px">'+
+      '<div class="turnline" style="justify-content:center;font-size:19px"><span class="dot" style="background:'+pColor(G.turn)+'"></span><b>'+esc(G.players[G.turn].name)+'</b>, you’re up</div>'+
+      (qinfo?'<div class="muted" style="margin-top:8px;font-weight:700">'+qinfo+'</div>':'')+
+    '</div>'+
+    '<button class="btn primary" style="margin-top:16px;font-size:19px;padding:18px" data-action="pickRandom">Draw question →</button>'+
+    '<div class="hint" style="margin-top:14px">Random from: '+esc(catNames)+' · <a class="link" data-action="openMenu">edit</a></div>';
 }
 
 /* ---------- QUESTION / STEAL / RESULT ---------- */
@@ -263,7 +262,7 @@ function openSettings(){
 }
 
 /* ---------- ACTIONS ---------- */
-function captureHome(){ var a=$('n0'),b=$('n1'); if(a&&b&&setup){ setup.names=[a.value,b.value]; } var tc=$('targetCustom'); if(tc&&setup){ var v=parseInt(tc.value,10); setup.target=(v>0?v:0); } }
+function captureHome(){ var a=$('n0'),b=$('n1'); if(a&&b&&setup){ setup.names=[a.value,b.value]; } }
 var actions={
   cycleMode:function(){ var order=['auto','online','offline']; var m=Game.prefs.mode||'auto'; var nm=order[(order.indexOf(m)+1)%3]; if(setup)setup.mode=nm; Game.setMode(nm); toast('Source: '+Game.modeLabel()); },
   setMode:function(el){ captureHome(); setup.mode=el.getAttribute('data-mode'); Game.prefs.mode=setup.mode; render(); },
@@ -271,9 +270,8 @@ var actions={
   toggleCat:function(el){ captureHome(); var k=el.getAttribute('data-cat'); var i=setup.included.indexOf(k); if(i>=0)setup.included.splice(i,1); else setup.included.push(k); render(); },
   allCats:function(){ captureHome(); setup.included=Object.keys(CATS); render(); },
   noCats:function(){ captureHome(); setup.included=[]; render(); },
-  setTarget:function(el){ captureHome(); setup.target=parseInt(el.getAttribute('data-t'),10)||0; setup.customOpen=false; render(); },
-  customTarget:function(){ captureHome(); setup.customOpen=true; render(); },
-  startGame:function(){ captureHome(); var inc=setup.included.slice(); if(!inc.length){ inc=Object.keys(CATS); toast('No categories picked — using all.'); } Game.start(setup.names,inc,setup.mode,setup.target); view='auto'; render(); },
+  setQTarget:function(el){ captureHome(); setup.qTarget=parseInt(el.getAttribute('data-q'),10)||0; render(); },
+  startGame:function(){ captureHome(); var inc=setup.included.slice(); if(!inc.length){ inc=Object.keys(CATS); toast('No categories picked — using all.'); } Game.start(setup.names,inc,setup.mode,setup.qTarget); view='auto'; render(); },
   resume:function(){ view='auto'; render(); },
   viewStats:function(){ closeSheet(); view='stats'; Stats.refresh(); render(); },
   viewHome:function(){ view='home'; render(); },

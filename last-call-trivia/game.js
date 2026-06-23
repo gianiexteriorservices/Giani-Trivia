@@ -31,6 +31,7 @@ var SEEN = load(LS.SEEN,{});
 var PREFS = load(LS.PREFS,{names:["Alex","Anthony"],included:Object.keys(CATS),mode:'auto'});
 if(!PREFS.included || !PREFS.included.length) PREFS.included = Object.keys(CATS);
 var G = load(LS.GAME,null);
+if(G){ if(!G.turnsTaken) G.turnsTaken=[0,0]; if(G.qTarget==null) G.qTarget=0; }
 
 /* ---- online feed ---- */
 var feed=[]; var fetching=false; var feedTried=false; var feedOk=false;
@@ -108,21 +109,21 @@ var Game = {
   feedCount:function(){ return feedPool(null).length; },
   remaining:function(cat){ return bankPool(cat).length + feedPool(cat).length; },
   loading:false,
-  matchOver:function(){ return !!(G && G.target>0 && (G.players[0].score>=G.target || G.players[1].score>=G.target)); },
+  matchOver:function(){ return !!(G && G.qTarget>0 && G.turnsTaken[0]>=G.qTarget && G.turnsTaken[1]>=G.qTarget); },
 
   setMode:function(m){ PREFS.mode=m; save(LS.PREFS,PREFS); if(isOnline()) refillFeed(PREFS.included); this.notify(); },
   setPrefs:function(names,included){ PREFS.names=names; PREFS.included=included; save(LS.PREFS,PREFS); },
   notify:function(){ if(this.onChange) this.onChange(); },
   persist:function(){ save(LS.GAME,G); save(LS.SEEN,SEEN); },
 
-  start:function(names,included,mode,target){
+  start:function(names,included,mode,qTarget){
     names=[ (names[0]||'Alex').trim()||'Alex', (names[1]||'Anthony').trim()||'Anthony' ];
     included = (included&&included.length)?included.slice():Object.keys(CATS);
     if(mode) PREFS.mode=mode;
-    PREFS.names=names; PREFS.included=included; PREFS.target=(target>0?target:0); save(LS.PREFS,PREFS);
+    PREFS.names=names; PREFS.included=included; PREFS.qTarget=(qTarget>0?qTarget:0); save(LS.PREFS,PREFS);
     G = { players:[{name:names[0],score:0},{name:names[1],score:0}],
           ids:[Stats.normName(names[0]),Stats.normName(names[1])],
-          turn:0, included:included, phase:'turn', target:(target>0?target:0),
+          turn:0, included:included, phase:'turn', qTarget:(qTarget>0?qTarget:0), turnsTaken:[0,0],
           card:null, pick:null, result:null,
           tally:[emptyTally(),emptyTally()], matchId:uuid(), ts:Date.now() };
     this.persist();
@@ -148,7 +149,7 @@ var Game = {
     if(correct){
       G.players[G.turn].score += pointsFor(c.d);
       G.result={ who:G.turn, chosen:idx, outcome:'active-correct', gained:pointsFor(c.d) };
-      SEEN[c.id]=1; G.phase='result';
+      SEEN[c.id]=1; G.turnsTaken[G.turn]++; G.phase='result';
     } else {
       G.pick={ kind:'wrong', chosen:idx };
       G.phase='steal';
@@ -166,11 +167,11 @@ var Game = {
     var gained=0;
     if(correct){ gained=stealPts(pointsFor(c.d)); G.players[opp].score+=gained; G.tally[opp].steals++; }
     G.result={ who:opp, chosen:idx, outcome: correct?'steal-correct':'steal-wrong', gained:gained };
-    SEEN[c.id]=1; G.phase='stealResult';
+    SEEN[c.id]=1; G.turnsTaken[G.turn]++; G.phase='stealResult';
     this.persist(); this.notify();
   },
   next:function(){
-    if(G.target>0 && (G.players[0].score>=G.target || G.players[1].score>=G.target)){ this.end(); return; }
+    if(this.matchOver()){ this.end(); return; }
     G.card=null; G.pick=null; G.result=null;
     G.turn=1-G.turn; G.phase='turn';
     this.persist(); refillIfLow(); this.notify();
@@ -193,7 +194,7 @@ var Game = {
   },
   rematch:function(){
     G.players[0].score=0; G.players[1].score=0; G.turn=0; G.phase='turn';
-    G.card=null; G.pick=null; G.result=null; G.tally=[emptyTally(),emptyTally()];
+    G.card=null; G.pick=null; G.result=null; G.tally=[emptyTally(),emptyTally()]; G.turnsTaken=[0,0];
     G.matchId=uuid(); G.ts=Date.now();
     this.persist(); if(isOnline()) refillFeed(G.included); this.notify();
   },
