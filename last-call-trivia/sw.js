@@ -1,5 +1,5 @@
 /* Last Call Trivia service worker — offline app shell. */
-var CACHE='lct-v1';
+var CACHE='lct-v2';
 var SHELL=['./','./index.html','./styles.css','./questions.js','./stats.js','./game.js','./ui.js','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',function(e){ e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(SHELL);}).then(function(){return self.skipWaiting();})); });
 self.addEventListener('activate',function(e){ e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return k!==CACHE?caches.delete(k):null;}));}).then(function(){return self.clients.claim();})); });
